@@ -1,0 +1,34 @@
+---
+- name: Create a Change Request in ServiceNow
+  hosts: localhost
+  gather_facts: no
+  vars:
+    servicenow_instance: "https://dev181327.service-now.com"
+    servicenow_user: "admin"
+    servicenow_password: "6kqg0Sr^ZR-V"
+    change_short_description: "Automated change: Patch WebGoat vulnerability"
+    change_description: "Apply configuration and security patch detected by Dynatrace SQLi alert."
+    change_type: "normal"  # Options: normal, emergency, standard
+
+  tasks:
+    - name: Create change request
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/change_request"
+        method: POST
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Accept: "application/json"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          short_description: "{{ change_short_description }}"
+          description: "{{ change_description }}"
+          type: "{{ change_type }}"
+      register: change_response
+
+    - name: Print change request number and sys_id
+      debug:
+        msg: "Change Request {{ change_response.json.result.number }} created: {{ servicenow_instance }}/nav_to.do?uri=change_request.do?sys_id={{ change_response.json.result.sys_id }}"
