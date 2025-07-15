@@ -8,7 +8,7 @@
     servicenow_password: "6kqg0Sr^ZR-V"
     incident_short_description: "Security alert: SQL Injection detected"
     incident_description: "Dynatrace detected a SQL Injection attack on the WebGoat app."
-    slack_webhook: "https://hooks.slack.com/services/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"
+    slack_webhook: "https://hooks.slack.com/services/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"
 
   tasks:
     - name: Create incident in ServiceNow
@@ -27,7 +27,6 @@
           short_description: "{{ incident_short_description }}"
           description: "{{ incident_description }}"
       register: servicenow_response
-      failed_when: servicenow_response.status != 201
 
     - name: Extract incident number and link
       set_fact:
@@ -43,7 +42,7 @@
         body_format: json
         body:
           text: |
-            :rotating_light: *New Incident Created*
-            *Number:* {{ incident_number }}
-            *Description:* {{ incident_short_description }}
+            :rotating_light: *New Incident Created*  
+            *Number:* {{ incident_number }}  
+            *Description:* {{ incident_short_description }}  
             <{{ incident_link }}|View Incident in ServiceNow>
