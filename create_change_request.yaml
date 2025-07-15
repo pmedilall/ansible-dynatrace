@@ -8,6 +8,7 @@
     validate_certs: no
     headers:
       Accept: "application/json"
+    status_code: [200, 201]
   register: incident_lookup
 
 - name: Set fact for incident sys_id
@@ -35,8 +36,8 @@
       type: "normal"
       chg_model: "007c4001c343101035ae3f52c1d3aeb2"
       incident: "{{ incident_sys_id }}"
+    status_code: [200, 201]
   register: change_response
-  status_code: [200, 201]
 
 - name: Show change request number
   debug:
@@ -50,9 +51,9 @@
     password: "{{ servicenow_password }}"
     force_basic_auth: yes
     validate_certs: no
-    status_code: [200, 201]
     headers:
       Accept: "application/json"
+    status_code: [200, 201]
   register: linked_incident_response
 
 - name: Show linked incident number
