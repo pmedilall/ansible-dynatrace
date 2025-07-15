@@ -1,3 +1,4 @@
+---
 - name: Discover choice fields for Incident table
   uri:
     url: "{{ servicenow_instance }}/api/now/table/sys_dictionary?sysparm_query=name=incident^internal_type=choice"
