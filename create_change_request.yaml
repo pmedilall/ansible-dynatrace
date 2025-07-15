@@ -1,56 +1,60 @@
----
-- name: Create Change Request in ServiceNow (Linked to Incident)
-  hosts: localhost
-  gather_facts: no
-  vars:
-    servicenow_instance: "https://dev181327.service-now.com"
-    servicenow_user: "admin"
-    servicenow_password: "6kqg0Sr^ZR-V"
-    incident_short_description: "Security alert: SQL Injection detected"
+- name: Lookup incident sys_id by short description
+  uri:
+    url: "{{ servicenow_instance }}/api/now/table/incident?sysparm_query=short_description={{ incident_short_description | urlencode }}"
+    method: GET
+    user: "{{ servicenow_user }}"
+    password: "{{ servicenow_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+    headers:
+      Accept: "application/json"
+  register: incident_lookup
 
-  tasks:
+- name: Set fact for incident sys_id
+  set_fact:
+    incident_sys_id: "{{ incident_lookup.json.result[0].sys_id }}"
 
-    - name: Lookup incident sys_id by short description
-      uri:
-        url: "{{ servicenow_instance }}/api/now/table/incident?sysparm_query=short_description={{ incident_short_description | urlencode }}&sysparm_limit=1"
-        method: GET
-        user: "{{ servicenow_user }}"
-        password: "{{ servicenow_password }}"
-        force_basic_auth: yes
-        validate_certs: no
-        status_code: [200, 201]
-        headers:
-          Accept: "application/json"
-      register: incident_lookup_response
+- name: Create change request in ServiceNow
+  uri:
+    url: "{{ servicenow_instance }}/api/now/table/change_request"
+    method: POST
+    user: "{{ servicenow_user }}"
+    password: "{{ servicenow_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+    status_code: [200, 201]
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+    body_format: json
+    body:
+      short_description: "Apply hotfix for SQL Injection vulnerability"
+      description: "Change required to remediate detected SQL Injection vulnerability from Dynatrace."
+      impact: "2"
+      urgency: "3"
+      type: "normal"
+      chg_model: "007c4001c343101035ae3f52c1d3aeb2"
+      incident: "{{ incident_sys_id }}"
+  register: change_response
+  status_code: [200, 201]
 
-    - name: Set fact for incident sys_id
-      set_fact:
-        incident_sys_id: "{{ incident_lookup_response.json.result[0].sys_id }}"
+- name: Show change request number
+  debug:
+    msg: "Change Request Created: {{ change_response.json.result.number }}"
 
-    - name: Create change request in ServiceNow
-      uri:
-        url: "{{ servicenow_instance }}/api/now/table/change_request"
-        method: POST
-        user: "{{ servicenow_user }}"
-        password: "{{ servicenow_password }}"
-        force_basic_auth: yes
-        validate_certs: no
-        status_code: [200, 201]
-        headers:
-          Content-Type: "application/json"
-          Accept: "application/json"
-        body_format: json
-        body:
-          short_description: "Apply hotfix for SQL Injection vulnerability"
-          description: "Change required to remediate detected SQL Injection vulnerability from Dynatrace."
-          type: "normal"
-          priority: "2"
-          risk: "moderate"
-          impact: "2"
-          work_notes: "Auto-created by Ansible due to Dynatrace security alert"
-          incident: "{{ incident_sys_id }}"
-      register: change_response
+- name: Get incident number for linked sys_id
+  uri:
+    url: "{{ servicenow_instance }}/api/now/table/incident?sysparm_query=sys_id={{ change_response.json.result.incident }}"
+    method: GET
+    user: "{{ servicenow_user }}"
+    password: "{{ servicenow_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+    status_code: [200, 201]
+    headers:
+      Accept: "application/json"
+  register: linked_incident_response
 
-    - name: Show change request number
-      debug:
-        msg: "Change Request Created: {{ change_response.json.result.number }}"
+- name: Show linked incident number
+  debug:
+    msg: "Linked Incident Number: {{ linked_incident_response.json.result[0].number }}"
