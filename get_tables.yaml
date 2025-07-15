@@ -1,0 +1,15 @@
+- name: Discover choice fields for Incident table
+  uri:
+    url: "{{ servicenow_instance }}/api/now/table/sys_dictionary?sysparm_query=name=incident^internal_type=choice"
+    method: GET
+    user: "{{ servicenow_user }}"
+    password: "{{ servicenow_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+    headers:
+      Accept: "application/json"
+  register: field_discovery
+
+- name: Show field names and labels
+  debug:
+    var: field_discovery.json.result
