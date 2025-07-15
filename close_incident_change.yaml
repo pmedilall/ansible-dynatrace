@@ -1,0 +1,86 @@
+---
+- name: Close Incident and Change Request in ServiceNow
+  hosts: localhost
+  gather_facts: false
+  vars:
+    servicenow_instance: "https://dev181327.service-now.com"
+    servicenow_user: "admin"
+    servicenow_password: "6kqg0Sr^ZR-V"
+    incident_short_description: "Security alert: SQL Injection detected"
+    change_request_number: "CHG0030007"
+
+  tasks:
+
+    - name: Lookup incident sys_id by short description
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/incident?sysparm_query=short_description={{ incident_short_description | urlencode }}"
+        method: GET
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Accept: "application/json"
+      register: incident_lookup
+
+    - name: Set incident sys_id
+      set_fact:
+        incident_sys_id: "{{ incident_lookup.json.result[0].sys_id }}"
+      when: incident_lookup.json.result | length > 0
+
+    - name: Close Incident
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/incident/{{ incident_sys_id }}"
+        method: PATCH
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        body_format: json
+        body:
+          state: "7"             # Closed
+          close_code: "Solved (Permanently)"
+          close_notes: "Remediation for SQL Injection vulnerability completed successfully."
+        status_code: [200]
+
+    - name: Lookup change request sys_id by number
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/change_request?sysparm_query=number={{ change_request_number }}"
+        method: GET
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Accept: "application/json"
+      register: change_lookup
+
+    - name: Set change request sys_id
+      set_fact:
+        change_sys_id: "{{ change_lookup.json.result[0].sys_id }}"
+      when: change_lookup.json.result | length > 0
+
+    - name: Close Change Request
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/change_request/{{ change_sys_id }}"
+        method: PATCH
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        body_format: json
+        body:
+          state: "3"             # Closed
+          close_code: "Successful"
+          close_notes: "Change implemented successfully and verified."
+        status_code: [200]
+
+    - name: ✅ Done
+      debug:
+        msg: "Both the incident and change request have been closed successfully."
