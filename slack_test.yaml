@@ -2,16 +2,12 @@
 - name: Send Slack test message
   hosts: localhost
   gather_facts: no
-  vars:
-    slack_webhook: "https://hooks.slack.com/services/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"
-
   tasks:
-    - name: Send Slack notification
+    - name: Send test notification to Slack
       uri:
-        url: "{{ slack_webhook }}"
+        url: "https://hooks.slack.com/services/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"
         method: POST
         headers:
           Content-Type: "application/json"
-        body_format: json
-        body:
-          text: ":tada: Slack webhook test from Ansible 🎉"
+        body: '{"text": ":rocket: *Ansible Slack Webhook Test – Success!*"}'
+        body_format: raw
