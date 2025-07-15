@@ -61,7 +61,7 @@
 
     - name: Get incident number for linked sys_id
       uri:
-        url: "{{ servicenow_instance }}/api/now/table/incident?sysparm_query=sys_id={{ change_response.json.result.incident }}"
+        url: "{{ servicenow_instance }}/api/now/table/incident?sysparm_query=sys_id={{ incident_sys_id }}"
         method: GET
         user: "{{ servicenow_user }}"
         password: "{{ servicenow_password }}"
