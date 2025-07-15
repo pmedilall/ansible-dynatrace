@@ -1,0 +1,24 @@
+---
+- name: Apply Fix for SQL Injection Vulnerability
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Print start of fix
+      debug:
+        msg: "🚀 Starting remediation for SQL Injection vulnerability..."
+
+    - name: Simulate patch deployment
+      shell: |
+        echo "Patching vulnerable component..."
+        sleep 3
+        echo "Patch applied successfully!"
+      register: patch_output
+
+    - name: Show patch result
+      debug:
+        msg: "{{ patch_output.stdout_lines }}"
+
+    - name: Notify remediation complete
+      debug:
+        msg: "✅ Remediation complete for SQL Injection vulnerability. System secured."
