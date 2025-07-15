@@ -3,7 +3,7 @@
   hosts: localhost
   gather_facts: no
   vars:
-    slack_webhook_url: "https://hooks.slack.com/services/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"
+    slack_webhook_url: "https://hooks.slack.com/services/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"
     slack_message: ':rocket: *Slack Webhook Test – Working via curl!*'
 
   tasks:
