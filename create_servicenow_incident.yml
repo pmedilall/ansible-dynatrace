@@ -25,19 +25,17 @@
         body:
           short_description: "{{ incident_short_description }}"
           description: "{{ incident_description }}"
-      register: incident_response
-      ignore_errors: yes
-      failed_when: false
-      no_log: true
+      register: servicenow_response
 
-    - name: Save incident sys_id and number for next playbook
+    - name: Save incident sys_id and number to file
       copy:
-        dest: /tmp/incident_vars.yml
         content: |
-          incident_sys_id: "{{ incident_response.json.result.sys_id | default('UNKNOWN') }}"
-          incident_number: "{{ incident_response.json.result.number | default('INC_UNKNOWN') }}"
-      delegate_to: localhost
+          {
+            "sys_id": "{{ servicenow_response.json.result.sys_id }}",
+            "number": "{{ servicenow_response.json.result.number }}"
+          }
+        dest: /tmp/incident.json
 
-    - name: Show incident result
+    - name: Show incident number
       debug:
-        msg: "Incident Created: {{ incident_response.json.result.number | default('UNKNOWN') }}"
+        msg: "Incident Created: {{ servicenow_response.json.result.number }}"
