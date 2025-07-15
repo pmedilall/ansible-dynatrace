@@ -19,6 +19,7 @@
         password: "{{ servicenow_password }}"
         force_basic_auth: yes
         validate_certs: no
+        status_code: 201
         headers:
           Content-Type: "application/json"
           Accept: "application/json"
