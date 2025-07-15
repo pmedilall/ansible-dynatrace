@@ -29,6 +29,10 @@
           type: "{{ change_type }}"
       register: change_response
 
-    - name: Print change request number and sys_id
+        - name: Print change request number and sys_id
       debug:
-        msg: "Change Request {{ change_response.json.result.number }} created: {{ servicenow_instance }}/nav_to.do?uri=change_request.do?sys_id={{ change_response.json.result.sys_id }}"
+        msg: |
+          Change Request Created!
+          Number: {{ change_response.json.result.number }}
+          Link: {{ servicenow_instance }}/nav_to.do?uri=change_request.do?sys_id={{ change_response.json.result.sys_id }}
+
