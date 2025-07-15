@@ -2,12 +2,14 @@
 - name: Create Incident in ServiceNow
   hosts: localhost
   gather_facts: no
+
   vars:
     servicenow_instance: "https://dev181327.service-now.com"
     servicenow_user: "admin"
     servicenow_password: "6kqg0Sr^ZR-V"
     incident_short_description: "Security alert: SQL Injection detected"
     incident_description: "Dynatrace detected a SQL Injection attack on the WebGoat app."
+    output_file: "/tmp/incident_response.json"
 
   tasks:
     - name: Create incident in ServiceNow
@@ -26,16 +28,14 @@
           short_description: "{{ incident_short_description }}"
           description: "{{ incident_description }}"
       register: servicenow_response
+      failed_when: servicenow_response.status | default(0) != 201
+      ignore_errors: true
 
-    - name: Save incident sys_id and number to file
+    - name: Save incident response for chaining
       copy:
-        content: |
-          {
-            "sys_id": "{{ servicenow_response.json.result.sys_id }}",
-            "number": "{{ servicenow_response.json.result.number }}"
-          }
-        dest: /tmp/incident.json
+        content: "{{ servicenow_response.json.result | to_nice_json }}"
+        dest: "{{ output_file }}"
 
     - name: Show incident number
       debug:
-        msg: "Incident Created: {{ servicenow_response.json.result.number }}"
+        msg: "Incident Created: {{ servicenow_response.json.result.number | default('Unknown') }}"
