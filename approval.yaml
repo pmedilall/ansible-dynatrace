@@ -8,7 +8,7 @@
     - name: 🛑 Waiting for manual approval in workflow
       pause:
         prompt: "Awaiting approval to proceed with the change implementation. Please approve via the workflow UI."
-        minutes: 2
+        minutes: 1
       when: approval_required | default(true)
 
     - name: ✅ Approval received
