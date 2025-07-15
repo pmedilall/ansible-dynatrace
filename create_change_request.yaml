@@ -29,7 +29,7 @@
           type: "{{ change_type }}"
       register: change_response
 
-        - name: Print change request number and sys_id
+    - name: Print change request number and sys_id
       debug:
         msg: |
           Change Request Created!
