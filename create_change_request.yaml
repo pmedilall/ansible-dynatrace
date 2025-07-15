@@ -1,21 +1,30 @@
 ---
-- name: Create Change Request in ServiceNow
+- name: Create Change Request in ServiceNow (Linked to Incident)
   hosts: localhost
   gather_facts: no
-
   vars:
     servicenow_instance: "https://dev181327.service-now.com"
     servicenow_user: "admin"
     servicenow_password: "6kqg0Sr^ZR-V"
-    change_short_description: "Emergency Change for WebGoat Vulnerability"
-    change_description: "Follow-up change after incident related to SQL Injection exploit"
-    input_file: "/tmp/incident_response.json"
+    incident_short_description: "Security alert: SQL Injection detected"
 
   tasks:
-    - name: Load incident sys_id from file
+
+    - name: Lookup incident sys_id by short description
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/incident?sysparm_query=short_description={{ incident_short_description | urlencode }}&sysparm_limit=1"
+        method: GET
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Accept: "application/json"
+      register: incident_lookup_response
+
+    - name: Set fact for incident sys_id
       set_fact:
-        incident_data: "{{ lookup('file', input_file) | from_json }}"
-        incident_sys_id: "{{ (lookup('file', input_file) | from_json).sys_id }}"
+        incident_sys_id: "{{ incident_lookup_response.json.result[0].sys_id }}"
 
     - name: Create change request in ServiceNow
       uri:
@@ -30,13 +39,16 @@
           Accept: "application/json"
         body_format: json
         body:
-          short_description: "{{ change_short_description }}"
-          description: "{{ change_description }}"
-          correlation_id: "{{ incident_sys_id }}"
+          short_description: "Apply hotfix for SQL Injection vulnerability"
+          description: "Change required to remediate detected SQL Injection vulnerability from Dynatrace."
+          type: "normal"
+          priority: "2"
+          risk: "moderate"
+          impact: "2"
+          work_notes: "Auto-created by Ansible due to Dynatrace security alert"
+          incident: "{{ incident_sys_id }}"
       register: change_response
-      failed_when: change_response.status | default(0) != 201
-      ignore_errors: true
 
     - name: Show change request number
       debug:
-        msg: "Change Request Created: {{ change_response.json.result.number | default('Unknown') }}"
+        msg: "Change Request Created: {{ change_response.json.result.number }}"
