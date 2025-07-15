@@ -9,6 +9,7 @@
     incident_short_description: "SQL Injection detected on production app"
 
   tasks:
+
     - name: Lookup incident sys_id by short description
       uri:
         url: "{{ servicenow_instance }}/api/now/table/incident?sysparm_query=short_description={{ incident_short_description | urlencode }}"
@@ -21,6 +22,11 @@
           Accept: "application/json"
         status_code: [200]
       register: incident_lookup
+
+    - name: Fail if no matching incident found
+      fail:
+        msg: "No incident found with short_description = {{ incident_short_description }}"
+      when: incident_lookup.json.result | length == 0
 
     - name: Set fact for incident sys_id
       set_fact:
