@@ -1,0 +1,30 @@
+---
+- name: Send Slack message using Bot Token
+  hosts: localhost
+  gather_facts: no
+  vars:
+    slack_bot_token: "xoxb-5008914657090-9202970188804-t8DGe5vgiJcEWhQVgBoh0Ivs"
+    slack_channel_id: "#devops"  # Replace with real channel ID
+    incident_number: "INC0012345"
+    incident_description: "Dynatrace detected an SQL Injection on WebGoat"
+
+  tasks:
+    - name: Post message to Slack
+      uri:
+        url: "https://slack.com/api/chat.postMessage"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ slack_bot_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          channel: "{{ slack_channel_id }}"
+          text: |
+            :rotating_light: *Security Incident Alert*
+            *Incident:* {{ incident_number }}
+            *Details:* {{ incident_description }}
+      register: slack_result
+
+    - name: Debug Slack API response
+      debug:
+        var: slack_result
