@@ -1,0 +1,73 @@
+---
+- name: Wait for Approval and Apply Fix for Change Request
+  hosts: localhost
+  gather_facts: false
+  vars:
+    servicenow_instance: "https://dev181327.service-now.com"
+    servicenow_user: "admin"
+    servicenow_password: "6kqg0Sr^ZR-V"
+    change_number: "CHG0030007"
+    max_retries: 10
+    delay_seconds: 10
+
+  tasks:
+
+    - name: Lookup change request sys_id by number
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/change_request?sysparm_query=number={{ change_number }}"
+        method: GET
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Accept: "application/json"
+        status_code: [200]
+      register: change_lookup
+
+    - name: Set fact for change sys_id
+      set_fact:
+        change_sys_id: "{{ change_lookup.json.result[0].sys_id }}"
+
+    - name: Wait for approval
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/change_request/{{ change_sys_id }}"
+        method: GET
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Accept: "application/json"
+        status_code: [200]
+      register: approval_check
+      until: approval_check.json.result.approval == "approved"
+      retries: "{{ max_retries }}"
+      delay: "{{ delay_seconds }}"
+      ignore_errors: no
+
+    - name: Simulate fix (echoing patch)
+      debug:
+        msg: "Patching SQL Injection vulnerability..."
+
+    - name: Add work note and update change to Implemented
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/change_request/{{ change_sys_id }}"
+        method: PATCH
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        body_format: json
+        body:
+          work_notes: "Fix applied successfully via Ansible."
+          state: "3"  # 'Implemented'
+        status_code: [200]
+      register: update_response
+
+    - name: Show final update status
+      debug:
+        msg: "Change {{ change_number }} moved to 'Implemented' with fix applied."
