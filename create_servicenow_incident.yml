@@ -1,0 +1,37 @@
+---
+- name: Create a ServiceNow incident from Ansible
+  hosts: localhost
+  gather_facts: no
+  vars:
+    servicenow_instance: "https://dev181327.service-now.com"
+    servicenow_user: "admin"
+    servicenow_password: "6kqg0Sr^ZR-V"
+    short_description: "🚨 Dynatrace Alert: SQL Injection Detected"
+    description: |
+      Dynatrace detected a SQL Injection vulnerability on the WebGoat application.
+      Immediate investigation required. Triggered via Ansible automation.
+
+  tasks:
+    - name: Create incident in ServiceNow
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/incident"
+        method: POST
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        body_format: json
+        body:
+          short_description: "{{ short_description }}"
+          description: "{{ description }}"
+          urgency: "1"
+          impact: "1"
+        status_code: 201
+        validate_certs: no
+      register: servicenow_response
+
+    - name: Show incident number
+      debug:
+        msg: "✅ Incident created: {{ servicenow_response.json.result.number }}"
