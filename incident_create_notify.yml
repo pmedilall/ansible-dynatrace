@@ -8,7 +8,7 @@
     servicenow_password: "6kqg0Sr^ZR-V"
     incident_short_description: "Security alert: SQL Injection detected"
     incident_description: "Dynatrace detected a SQL Injection attack on the WebGoat app."
-    slack_webhook: "https://hooks.slack.com/services/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"
+    slack_webhook: "https://hooks.slack.com/services/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"
 
   tasks:
 
