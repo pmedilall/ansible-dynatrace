@@ -1,18 +1,22 @@
 ---
-- name: Create Change Request in ServiceNow (linked to incident)
+- name: Create Change Request in ServiceNow
   hosts: localhost
   gather_facts: no
-  vars_files:
-    - /tmp/incident_vars.yml  # Must contain 'incident_sys_id'
 
   vars:
     servicenow_instance: "https://dev181327.service-now.com"
     servicenow_user: "admin"
     servicenow_password: "6kqg0Sr^ZR-V"
-    change_short_description: "SQL Injection Fix Deployment"
-    change_description: "Automated fix for WebGoat SQL injection issue triggered by Dynatrace incident."
+    change_short_description: "Emergency Change for WebGoat Vulnerability"
+    change_description: "Follow-up change after incident related to SQL Injection exploit"
+    input_file: "/tmp/incident_response.json"
 
   tasks:
+    - name: Load incident sys_id from file
+      set_fact:
+        incident_data: "{{ lookup('file', input_file) | from_json }}"
+        incident_sys_id: "{{ (lookup('file', input_file) | from_json).sys_id }}"
+
     - name: Create change request in ServiceNow
       uri:
         url: "{{ servicenow_instance }}/api/now/table/change_request"
@@ -28,17 +32,11 @@
         body:
           short_description: "{{ change_short_description }}"
           description: "{{ change_description }}"
-          incident: "{{ incident_sys_id }}"
+          correlation_id: "{{ incident_sys_id }}"
       register: change_response
-      failed_when: false
-      ignore_errors: yes
-
-    - name: Save change request sys_id to file (optional for chaining further automation)
-      copy:
-        dest: "/tmp/change_vars.yml"
-        content: |
-          change_sys_id: {{ change_response.json.result.sys_id | default('') }}
+      failed_when: change_response.status | default(0) != 201
+      ignore_errors: true
 
     - name: Show change request number
       debug:
-        msg: "Change Request Created: {{ change_response.json.result.number | default('UNKNOWN') }}"
+        msg: "Change Request Created: {{ change_response.json.result.number | default('Unknown') }}"
