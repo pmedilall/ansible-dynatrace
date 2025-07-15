@@ -44,6 +44,7 @@
         body:
           state: "7"                          # Closed
           close_code: "Solved (Permanently)"
+          resolution_code: "Solved (Permanently)"
           close_notes: "Remediation for SQL Injection vulnerability completed successfully."
         status_code: [200, 201]
 
@@ -80,6 +81,7 @@
         body:
           state: "3"               # Closed
           close_code: "Successful"
+          resolution_code: "Solved (Permanently)"
           close_notes: "Change implemented successfully and verified."
         status_code: [200, 201]
 
