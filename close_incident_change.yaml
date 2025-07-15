@@ -19,9 +19,9 @@
         password: "{{ servicenow_password }}"
         force_basic_auth: yes
         validate_certs: no
-        status_code: [200, 201]
         headers:
           Accept: "application/json"
+        status_code: [200, 201]
       register: incident_lookup
 
     - name: Set incident sys_id
@@ -37,14 +37,14 @@
         password: "{{ servicenow_password }}"
         force_basic_auth: yes
         validate_certs: no
-        status_code: [200, 201]
         headers:
           Content-Type: "application/json"
           Accept: "application/json"
         body_format: json
         body:
-          state: "7"             # Closed
+          state: "7"                          # Closed
           close_code: "Solved (Permanently)"
+          resolution_code: "Solved (Permanently)"   # ✅ Required field
           close_notes: "Remediation for SQL Injection vulnerability completed successfully."
         status_code: [200, 201]
 
@@ -56,9 +56,9 @@
         password: "{{ servicenow_password }}"
         force_basic_auth: yes
         validate_certs: no
-        status_code: [200, 201]
         headers:
           Accept: "application/json"
+        status_code: [200, 201]
       register: change_lookup
 
     - name: Set change request sys_id
@@ -74,16 +74,15 @@
         password: "{{ servicenow_password }}"
         force_basic_auth: yes
         validate_certs: no
-        status_code: [200, 201]
         headers:
           Content-Type: "application/json"
           Accept: "application/json"
         body_format: json
         body:
-          state: "3"             # Closed
+          state: "3"               # Closed
           close_code: "Successful"
           close_notes: "Change implemented successfully and verified."
-        status_code: [200]
+        status_code: [200, 201]
 
     - name: ✅ Done
       debug:
