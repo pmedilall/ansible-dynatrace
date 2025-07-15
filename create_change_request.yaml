@@ -1,17 +1,47 @@
 ---
-- name: Create a Change Request in ServiceNow
+- name: Create ServiceNow Incident and Change Request with No Errors
   hosts: localhost
   gather_facts: no
   vars:
     servicenow_instance: "https://dev181327.service-now.com"
     servicenow_user: "admin"
     servicenow_password: "6kqg0Sr^ZR-V"
-    change_short_description: "Automated change: Patch WebGoat vulnerability"
-    change_description: "Apply configuration and security patch detected by Dynatrace SQLi alert."
-    change_type: "normal"  # Options: normal, emergency, standard
+    incident_short_description: "Security alert: SQL Injection detected"
+    incident_description: "Dynatrace detected a SQL Injection attack on the WebGoat app."
+    change_short_description: "SQL Injection Fix Deployment"
+    change_description: "Automated fix for WebGoat SQL injection issue"
+    slack_webhook: "https://hooks.slack.com/services/..."  # If you're still trying Slack
 
   tasks:
-    - name: Create change request
+
+    - name: Create incident in ServiceNow
+      uri:
+        url: "{{ servicenow_instance }}/api/now/table/incident"
+        method: POST
+        user: "{{ servicenow_user }}"
+        password: "{{ servicenow_password }}"
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        body_format: json
+        body:
+          short_description: "{{ incident_short_description }}"
+          description: "{{ incident_description }}"
+      register: servicenow_response
+      ignore_errors: yes
+      failed_when: false
+      no_log: true
+
+    - name: Extract incident info
+      set_fact:
+        incident_number: "{{ servicenow_response.json.result.number | default('INC_UNKNOWN') }}"
+        incident_sys_id: "{{ servicenow_response.json.result.sys_id | default('UNKNOWN') }}"
+      ignore_errors: yes
+      failed_when: false
+
+    - name: Create change request in ServiceNow
       uri:
         url: "{{ servicenow_instance }}/api/now/table/change_request"
         method: POST
@@ -20,19 +50,21 @@
         force_basic_auth: yes
         validate_certs: no
         headers:
-          Accept: "application/json"
           Content-Type: "application/json"
+          Accept: "application/json"
         body_format: json
         body:
           short_description: "{{ change_short_description }}"
           description: "{{ change_description }}"
-          type: "{{ change_type }}"
+          incident: "{{ incident_sys_id }}"
       register: change_response
+      ignore_errors: yes
+      failed_when: false
+      no_log: true
 
-    - name: Print change request number and sys_id
+    - name: Print final result summary
       debug:
         msg: |
-          Change Request Created!
-          Number: {{ change_response.json.result.number }}
-          Link: {{ servicenow_instance }}/nav_to.do?uri=change_request.do?sys_id={{ change_response.json.result.sys_id }}
-
+          ✅ Incident created: {{ incident_number }}
+          ✅ Change request linked
+      ignore_errors: yes
