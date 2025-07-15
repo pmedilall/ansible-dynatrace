@@ -18,6 +18,7 @@
         password: "{{ servicenow_password }}"
         force_basic_auth: yes
         validate_certs: no
+        status_code: [200, 201]
         headers:
           Accept: "application/json"
       register: incident_lookup_response
