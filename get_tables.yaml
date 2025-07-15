@@ -1,5 +1,5 @@
 ---
-- name: Discover Choice Fields for Incident Table in ServiceNow
+- name: Discover All Dictionary Fields for Incident Table in ServiceNow
   hosts: localhost
   gather_facts: false
   vars:
@@ -9,9 +9,9 @@
 
   tasks:
 
-    - name: Discover choice fields for Incident table
+    - name: Get all dictionary entries for incident table
       uri:
-        url: "{{ servicenow_instance }}/api/now/table/sys_dictionary?sysparm_query=name=incident^internal_type=choice"
+        url: "{{ servicenow_instance }}/api/now/table/sys_dictionary?sysparm_query=name=incident&sysparm_limit=500"
         method: GET
         user: "{{ servicenow_user }}"
         password: "{{ servicenow_password }}"
@@ -19,9 +19,9 @@
         validate_certs: no
         headers:
           Accept: "application/json"
-      register: field_discovery
+      register: all_dictionary_fields
 
-    - name: Show field names and labels
+    - name: Filter and show fields with internal_type=choice
       debug:
-        msg: "{{ item.element }} | {{ item.column_label }}"
-      loop: "{{ field_discovery.json.result }}"
+        msg: "{{ item.element }} - {{ item.column_label }}"
+      loop: "{{ all_dictionary_fields.json.result | selectattr('internal_type', 'equalto', 'choice') | list }}"
