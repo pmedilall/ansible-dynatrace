@@ -1,15 +1,16 @@
 ---
-- name: Create Change Request in ServiceNow
+- name: Create Change Request in ServiceNow (linked to incident)
   hosts: localhost
   gather_facts: no
   vars_files:
-    - /tmp/incident_vars.yml
+    - /tmp/incident_vars.yml  # Must contain 'incident_sys_id'
+
   vars:
     servicenow_instance: "https://dev181327.service-now.com"
     servicenow_user: "admin"
     servicenow_password: "6kqg0Sr^ZR-V"
     change_short_description: "SQL Injection Fix Deployment"
-    change_description: "Automated fix for WebGoat SQL injection issue"
+    change_description: "Automated fix for WebGoat SQL injection issue triggered by Dynatrace incident."
 
   tasks:
     - name: Create change request in ServiceNow
@@ -29,9 +30,14 @@
           description: "{{ change_description }}"
           incident: "{{ incident_sys_id }}"
       register: change_response
-      ignore_errors: yes
       failed_when: false
-      # no_log removed so we can see output
+      ignore_errors: yes
+
+    - name: Save change request sys_id to file (optional for chaining further automation)
+      copy:
+        dest: "/tmp/change_vars.yml"
+        content: |
+          change_sys_id: {{ change_response.json.result.sys_id | default('') }}
 
     - name: Show change request number
       debug:
