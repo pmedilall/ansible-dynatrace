@@ -1,0 +1,16 @@
+---
+- name: CAB Approval
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: 🛑 Waiting for manual approval in workflow
+      pause:
+        prompt: "Awaiting approval to proceed with the change implementation. Please approve via the workflow UI."
+        minutes: 60
+      when: approval_required | default(true)
+
+    - name: ✅ Approval received
+      debug:
+        msg: "Change approved. Proceeding with remediation tasks."
