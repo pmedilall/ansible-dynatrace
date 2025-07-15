@@ -6,7 +6,7 @@
     servicenow_instance: "https://dev181327.service-now.com"
     servicenow_user: "admin"
     servicenow_password: "6kqg0Sr^ZR-V"
-    incident_short_description: "SQL Injection detected on production app"
+    incident_short_description: "Security alert: SQL Injection detected"
 
   tasks:
 
