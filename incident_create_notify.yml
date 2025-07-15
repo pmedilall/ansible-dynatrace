@@ -8,9 +8,10 @@
     servicenow_password: "6kqg0Sr^ZR-V"
     incident_short_description: "Security alert: SQL Injection detected"
     incident_description: "Dynatrace detected a SQL Injection attack on the WebGoat app."
-    slack_webhook: "https://hooks.slack.com/services/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"
+    slack_webhook: "https://hooks.slack.com/services/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"
 
   tasks:
+
     - name: Create incident in ServiceNow
       uri:
         url: "{{ servicenow_instance }}/api/now/table/incident"
@@ -19,7 +20,6 @@
         password: "{{ servicenow_password }}"
         force_basic_auth: yes
         validate_certs: no
-        status_code: 201
         headers:
           Content-Type: "application/json"
           Accept: "application/json"
@@ -28,8 +28,9 @@
           short_description: "{{ incident_short_description }}"
           description: "{{ incident_description }}"
       register: servicenow_response
+      failed_when: servicenow_response.status not in [200, 201]
 
-    - name: Extract incident number and link
+    - name: Extract incident details
       set_fact:
         incident_number: "{{ servicenow_response.json.result.number }}"
         incident_link: "{{ servicenow_instance }}/nav_to.do?uri=incident.do?sys_id={{ servicenow_response.json.result.sys_id }}"
@@ -43,7 +44,7 @@
         body_format: json
         body:
           text: |
-            :rotating_light: *New Incident Created*  
-            *Number:* {{ incident_number }}  
-            *Description:* {{ incident_short_description }}  
-            <{{ incident_link }}|View Incident in ServiceNow>
+            :rotating_light: *New Security Incident Created*
+            *Incident Number:* {{ incident_number }}
+            *Description:* {{ incident_short_description }}
+            <{{ incident_link }}|:link: View in ServiceNow>
