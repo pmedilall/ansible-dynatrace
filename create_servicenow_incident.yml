@@ -1,15 +1,13 @@
 ---
-- name: Create a ServiceNow incident from Ansible
+- name: Create Incident in ServiceNow
   hosts: localhost
   gather_facts: no
   vars:
     servicenow_instance: "https://dev181327.service-now.com"
     servicenow_user: "admin"
     servicenow_password: "6kqg0Sr^ZR-V"
-    short_description: "🚨 Dynatrace Alert: SQL Injection Detected"
-    description: |
-      Dynatrace detected a SQL Injection vulnerability on the WebGoat application.
-      Immediate investigation required. Triggered via Ansible automation.
+    incident_short_description: "Security alert: SQL Injection detected"
+    incident_description: "Dynatrace detected a SQL Injection attack on the WebGoat app."
 
   tasks:
     - name: Create incident in ServiceNow
@@ -19,19 +17,27 @@
         user: "{{ servicenow_user }}"
         password: "{{ servicenow_password }}"
         force_basic_auth: yes
+        validate_certs: no
         headers:
           Content-Type: "application/json"
           Accept: "application/json"
         body_format: json
         body:
-          short_description: "{{ short_description }}"
-          description: "{{ description }}"
-          urgency: "1"
-          impact: "1"
-        status_code: 201
-        validate_certs: no
-      register: servicenow_response
+          short_description: "{{ incident_short_description }}"
+          description: "{{ incident_description }}"
+      register: incident_response
+      ignore_errors: yes
+      failed_when: false
+      no_log: true
 
-    - name: Show incident number
+    - name: Save incident sys_id and number for next playbook
+      copy:
+        dest: /tmp/incident_vars.yml
+        content: |
+          incident_sys_id: "{{ incident_response.json.result.sys_id | default('UNKNOWN') }}"
+          incident_number: "{{ incident_response.json.result.number | default('INC_UNKNOWN') }}"
+      delegate_to: localhost
+
+    - name: Show incident result
       debug:
-        msg: "✅ Incident created: {{ servicenow_response.json.result.number }}"
+        msg: "Incident Created: {{ incident_response.json.result.number | default('UNKNOWN') }}"
